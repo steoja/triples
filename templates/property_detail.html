@@ -14,6 +14,29 @@
 {% block content %}
 <h1 class="mb-4">{{ property.name }}</h1>
 <p>Address: {{ property.address }}</p>
+<div class="card mb-4">
+    <div class="card-header">
+        Financial Summary for {{ current_year }}
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4">
+                <h5 class="card-title">Total Income</h5>
+                <p class="card-text text-success">{{ total_income|currencyformat }}</p>
+            </div>
+            <div class="col-md-4">
+                <h5 class="card-title">Total Expenses</h5>
+                <p class="card-text text-danger">{{ total_expenses|currencyformat }}</p>
+            </div>
+            <div class="col-md-4">
+                <h5 class="card-title">Net Income</h5>
+                <p class="card-text {% if net_income >= 0 %}text-success{% else %}text-danger{% endif %}">
+                    {{ net_income|currencyformat }}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
 
 <h2 class="mt-4 mb-3">Units</h2>
 <a href="{{ url_for('generate_rent_payments', property_id=property.id) }}" class="btn btn-primary mb-3">Generate Rent

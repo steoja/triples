@@ -2,16 +2,14 @@
 {% block title %}LLC List{% endblock %}
 
 {% block content %}
-<h1 class="mb-4">LLCs</h1>
-<div class="row">
+<h1 class="mb-4 text-2xl font-bold">LLCs</h1>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
     {% for llc in llcs %}
-    <div class="col-md-4 mb-3">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">{{ llc.name }}</h5>
-                <p class="card-text">{{ llc.properties|length }} properties</p>
-                <a href="{{ url_for('llc_detail', llc_id=llc.id) }}" class="btn btn-primary">View Details</a>
-            </div>
+    <div class="bg-white rounded-lg shadow-md p-4">
+        <div class="card-body">
+            <h5 class="text-xl font-semibold">{{ llc.name }}</h5>
+            <p class="text-gray-600">{{ llc.properties|length }} properties</p>
+            <a href="{{ url_for('llc_detail', llc_id=llc.id) }}" class="btn btn-primary">View Details</a>
         </div>
     </div>
     {% endfor %}

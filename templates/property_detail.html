@@ -1,0 +1,278 @@
+{% extends "base.html" %}
+{% block title %}{{ property.name }} Details{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<style>
+    .chart-container {
+        width: 100%;
+        height: 400px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">{{ property.name }}</h1>
+<p>Address: {{ property.address }}</p>
+
+<h2 class="mt-4 mb-3">Units</h2>
+<a href="{{ url_for('generate_rent_payments', property_id=property.id) }}" class="btn btn-primary mb-3">Generate Rent
+    Payments for Current Month</a>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Unit Number</th>
+            <th>Renter's Name</th>
+            <th>Phone Number</th>
+            <th>Email</th>
+            <th>Rent Amount</th>
+            <th>Rent Due Date</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for unit in property.units %}
+        <tr>
+            <td>{{ unit.unit_number }}</td>
+            <td>{{ unit.renter_name }}</td>
+            <td>{{ unit.phone_number }}</td>
+            <td>{{ unit.email }}</td>
+            <td>${{ unit.rent_amount }}</td>
+            <td>{{ unit.rent_due_date.strftime('%B %d, %Y') }}</td>
+            <td>
+                <a href="{{ url_for('edit_unit', unit_id=unit.id) }}" class="btn btn-sm btn-primary">Edit</a>
+                <a href="{{ url_for('unit_rent_payments', unit_id=unit.id) }}" class="btn btn-sm btn-info">Rent
+                    Payments</a>
+                <form action="{{ url_for('delete_unit', unit_id=unit.id) }}" method="POST" style="display: inline;">
+                    <button type="submit" class="btn btn-sm btn-danger"
+                        onclick="return confirm('Are you sure you want to delete this unit?');">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<a href="{{ url_for('add_unit', property_id=property.id) }}" class="btn btn-primary mb-4">Add Unit</a>
+
+<h2 class="mt-4 mb-3">Add Payable</h2>
+<form method="POST" action="{{ url_for('property_detail', property_id=property.id) }}" class="mb-4">
+    <input type="hidden" name="add_payable" value="1">
+    <div class="row g-3 align-items-end">
+        <div class="col-md">
+            <label for="description" class="form-label">Description</label>
+            <input type="text" class="form-control" id="description" name="description" required>
+        </div>
+        <div class="col-md">
+            <label for="amount" class="form-label">Amount</label>
+            <input type="number" step="0.01" class="form-control" id="amount" name="amount" required>
+        </div>
+        <div class="col-md">
+            <label for="due_date" class="form-label">Due Date</label>
+            <input type="text" class="form-control datepicker" id="due_date" name="due_date" required>
+        </div>
+        <div class="col-md">
+            <label for="vendor" class="form-label">Vendor</label>
+            <input type="text" class="form-control" id="vendor" name="vendor" required autocomplete="off">
+            <div id="vendorSuggestions" class="dropdown-menu"></div>
+        </div>
+        <div class="col-md">
+            <label for="category" class="form-label">Category</label>
+            <select class="form-select" id="category" name="category" required>
+                <option value="" selected disabled>Choose a category</option>
+                {% for category in categories %}
+                <option value="{{ category }}">{{ category }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md">
+            <button type="submit" class="btn btn-primary">Add Payable</button>
+        </div>
+    </div>
+</form>
+
+<h2 class="mt-4 mb-3">Payables</h2>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Description</th>
+            <th>Amount</th>
+            <th>Due Date</th>
+            <th>Category</th>
+            <th>Vendor</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for payable in property.payables %}
+        <tr>
+            <td>{{ payable.description }}</td>
+            <td>${{ payable.amount }}</td>
+            <td>{{ payable.due_date.strftime('%B %d, %Y') }}</td>
+            <td>{{ payable.category }}</td>
+            <td>{{ payable.vendor }}</td>
+            <td>
+                <button type="button" class="btn btn-sm btn-success mark-as-paid-btn"
+                    data-payable-id="{{ payable.id }}">
+                    Mark as Paid
+                </button>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<h2 class="mt-4 mb-3">Add Expense</h2>
+<form method="POST" action="{{ url_for('property_detail', property_id=property.id) }}" class="mb-4">
+    <input type="hidden" name="add_expense" value="1">
+    <div class="row g-3 align-items-end">
+        <div class="col-md">
+            <label for="description" class="form-label">Description</label>
+            <input type="text" class="form-control" id="description" name="description" required>
+        </div>
+        <div class="col-md">
+            <label for="amount" class="form-label">Amount</label>
+            <input type="number" step="0.01" class="form-control" id="amount" name="amount" required>
+        </div>
+        <div class="col-md">
+            <label for="date_paid" class="form-label">Date Paid</label>
+            <input type="text" class="form-control datepicker" id="date_paid" name="date_paid" required>
+        </div>
+        <div class="col-md">
+            <label for="vendor" class="form-label">Vendor</label>
+            <input type="text" class="form-control" id="vendor" name="vendor" required autocomplete="off">
+            <div id="vendorSuggestions" class="dropdown-menu"></div>
+        </div>
+        <div class="col-md">
+            <label for="category" class="form-label">Category</label>
+            <select class="form-select" id="category" name="category" required>
+                <option value="" selected disabled>Choose a category</option>
+                {% for category in categories %}
+                <option value="{{ category }}">{{ category }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md">
+            <label for="payment_method_type" class="form-label">Payment Method</label>
+            <select class="form-select payment_method_type" id="payment_method_type" name="payment_method_type"
+                required>
+                <option value="" selected disabled>Choose a method</option>
+                {% for method in payment_method_types %}
+                <option value="{{ method }}">{{ method }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md credit_card_field" style="display: none;">
+            <label for="credit_card_id" class="form-label">Credit Card</label>
+            <select class="form-select" id="credit_card_id" name="credit_card_id">
+                <option value="" selected disabled>Choose a credit card</option>
+                {% for card in credit_cards %}
+                <option value="{{ card.id }}">{{ card.description }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md check_number_field" style="display: none;">
+            <label for="check_number" class="form-label">Check Number</label>
+            <input type="text" class="form-control" id="check_number" name="check_number">
+        </div>
+        <div class="col-md">
+            <button type="submit" class="btn btn-primary">Add Expense</button>
+        </div>
+    </div>
+</form>
+
+<h2 class="mt-4 mb-3">Expenses</h2>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Description</th>
+            <th>Amount</th>
+            <th>Date Paid</th>
+            <th>Category</th>
+            <th>Vendor</th>
+            <th>Payment Method</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for expense in property.expenses %}
+        <tr>
+            <td>{{ expense.description }}</td>
+            <td>${{ expense.amount }}</td>
+            <td>{{ expense.date_paid.strftime('%B %d, %Y') }}</td>
+            <td>{{ expense.category }}</td>
+            <td>{{ expense.vendor }}</td>
+            <td>
+                {{ expense.payment_method_type }}
+                {% if expense.payment_method_type == 'Credit Card' %}
+                ({{ expense.card_type }} ending in {{ expense.card_last_four }})
+                {% elif expense.payment_method_type == 'Check' %}
+                (Check #{{ expense.check_number }})
+                {% endif %}
+            </td>
+            <td>
+                <a href="{{ url_for('edit_expense', expense_id=expense.id) }}" class="btn btn-sm btn-primary">Edit</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-- Payment Modal -->
+<!-- Payment Modal -->
+<div class="modal fade" id="paymentModal" tabindex="-1" aria-labelledby="paymentModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="paymentModalLabel">Mark Payable as Paid</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="paymentForm" method="POST">
+                    <div class="mb-3">
+                        <label for="modal_payment_method_type" class="form-label">Payment Method</label>
+                        <select class="form-select" id="modal_payment_method_type" name="payment_method_type" required>
+                            <option value="" selected disabled>Choose a method</option>
+                            {% for method in payment_method_types %}
+                            <option value="{{ method }}">{{ method }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3" id="modal_credit_card_field" style="display: none;">
+                        <label for="modal_credit_card_id" class="form-label">Credit Card</label>
+                        <select class="form-select" id="modal_credit_card_id" name="credit_card_id">
+                            <option value="" selected disabled>Choose a credit card</option>
+                            {% for card in credit_cards %}
+                            <option value="{{ card.id }}">{{ card.description }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3" id="modal_check_number_field" style="display: none;">
+                        <label for="modal_check_number" class="form-label">Check Number</label>
+                        <input type="text" class="form-control" id="modal_check_number" name="check_number">
+                    </div>
+                    <div class="mb-3">
+                        <label for="modal_date_paid" class="form-label">Date Paid</label>
+                        <input type="text" class="form-control datepicker" id="modal_date_paid" name="date_paid"
+                            required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="submitPaymentForm">Mark Paid</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script>
+    var chartData = JSON.parse('{{ chart_data_json | safe }}');
+</script>
+<script src="{{ url_for('static', filename='js/property_detail.js') }}"></script>
+{% endblock %}

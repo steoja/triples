@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Edit Payment Method{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">Edit Payment Method</h1>
+<form method="POST">
+    <div class="mb-3">
+        <label for="method_type" class="form-label">Method Type</label>
+        <select class="form-select" id="method_type" name="method_type" required>
+            {% for type in method_types %}
+            <option value="{{ type }}" {% if type==payment_method.method_type %}selected{% endif %}>{{ type }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="mb-3">
+        <label for="description" class="form-label">Description</label>
+        <input type="text" class="form-control" id="description" name="description"
+            value="{{ payment_method.description }}" required>
+    </div>
+    <div id="credit_card_fields" class="{% if payment_method.method_type != 'Credit Card' %}d-none{% endif %}">
+        <div class="mb-3">
+            <label for="card_number" class="form-label">Card Number (last 4 digits)</label>
+            <input type="text" class="form-control" id="card_number" name="card_number"
+                value="{{ payment_method.card_number }}" pattern="\d{4}" maxlength="4">
+        </div>
+        <div class="mb-3">
+            <label for="card_type" class="form-label">Card Type</label>
+            <select class="form-select" id="card_type" name="card_type">
+                {% for type in card_types %}
+                <option value="{{ type }}" {% if type==payment_method.card_type %}selected{% endif %}>{{ type }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+    <button type="submit" class="btn btn-primary">Update Payment Method</button>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const methodTypeSelect = document.getElementById('method_type');
+        const creditCardFields = document.getElementById('credit_card_fields');
+
+        function updateCreditCardFields() {
+            if (methodTypeSelect.value === 'Credit Card') {
+                creditCardFields.classList.remove('d-none');
+            } else {
+                creditCardFields.classList.add('d-none');
+            }
+        }
+
+        methodTypeSelect.addEventListener('change', updateCreditCardFields);
+        updateCreditCardFields();  // Call once to set initial state
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block title %}Rent Payments for {{ unit.unit_number }}{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">Rent Payments for Unit {{ unit.unit_number }}</h1>
+<p>Renter: {{ unit.renter_name }}</p>
+<p>Monthly Rent: ${{ unit.rent_amount }}</p>
+<p>Due Date: {{ unit.rent_due_date.day }}th of each month</p>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Due Date</th>
+            <th>Amount</th>
+            <th>Status</th>
+            <th>Total Paid</th>
+            <th>Balance Due</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for payment in rent_payments %}
+        <tr>
+            <td>{{ payment.due_date.strftime('%B %d, %Y') }}</td>
+            <td>${{ payment.amount }}</td>
+            <td>{{ payment.status }}</td>
+            <td>${{ payment.total_paid }}</td>
+            <td>${{ payment.balance_due }}</td>
+            <td>
+                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal"
+                    data-bs-target="#paymentModal{{ payment.id }}">
+                    Add Payment
+                </button>
+                <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal"
+                    data-bs-target="#transactionsModal{{ payment.id }}">
+                    View Transactions
+                </button>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% for payment in rent_payments %}
+<div class="modal fade" id="paymentModal{{ payment.id }}" tabindex="-1"
+    aria-labelledby="paymentModalLabel{{ payment.id }}" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="paymentModalLabel{{ payment.id }}">Add Payment for {{
+                    payment.due_date.strftime('%B %Y') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST">
+                    <input type="hidden" name="rent_payment_id" value="{{ payment.id }}">
+                    <div class="mb-3">
+                        <label for="amount" class="form-label">Amount</label>
+                        <input type="number" step="0.01" class="form-control" id="amount" name="amount" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="payment_date" class="form-label">Payment Date</label>
+                        <input type="date" class="form-control" id="payment_date" name="payment_date" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="payment_method" class="form-label">Payment Method</label>
+                        <select class="form-select" id="payment_method" name="payment_method" required>
+                            <option value="Cash">Cash</option>
+                            <option value="Check">Check</option>
+                            <option value="Credit Card">Credit Card</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">Notes</label>
+                        <textarea class="form-control" id="notes" name="notes"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add Payment</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="transactionsModal{{ payment.id }}" tabindex="-1"
+    aria-labelledby="transactionsModalLabel{{ payment.id }}" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="transactionsModalLabel{{ payment.id }}">Payment Transactions for {{
+                    payment.due_date.strftime('%B %Y') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Amount</th>
+                            <th>Method</th>
+                            <th>Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for transaction in payment.transactions %}
+                        <tr>
+                            <td>{{ transaction.payment_date.strftime('%B %d, %Y') }}</td>
+                            <td>${{ transaction.amount }}</td>
+                            <td>{{ transaction.payment_method }}</td>
+                            <td>{{ transaction.notes }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}

@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Add Payment Method{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">Add Payment Method</h1>
+<form method="POST">
+    <div class="mb-3">
+        <label for="method_type" class="form-label">Method Type</label>
+        <select class="form-select" id="method_type" name="method_type" required>
+            <option value="" selected disabled>Choose a method type</option>
+            {% for type in method_types %}
+            <option value="{{ type }}">{{ type }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="mb-3">
+        <label for="description" class="form-label">Description</label>
+        <input type="text" class="form-control" id="description" name="description" required>
+    </div>
+    <div id="credit_card_fields" style="display: none;">
+        <div class="mb-3">
+            <label for="card_number" class="form-label">Card Number (last 4 digits)</label>
+            <input type="text" class="form-control" id="card_number" name="card_number" pattern="\d{4}" maxlength="4">
+        </div>
+        <div class="mb-3">
+            <label for="card_type" class="form-label">Card Type</label>
+            <select class="form-select" id="card_type" name="card_type">
+                <option value="" selected disabled>Choose a card type</option>
+                {% for type in card_types %}
+                <option value="{{ type }}">{{ type }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+    <button type="submit" class="btn btn-primary">Add Payment Method</button>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const methodTypeSelect = document.getElementById('method_type');
+        const creditCardFields = document.getElementById('credit_card_fields');
+
+        methodTypeSelect.addEventListener('change', function () {
+            if (this.value === 'Credit Card') {
+                creditCardFields.style.display = 'block';
+            } else {
+                creditCardFields.style.display = 'none';
+            }
+        });
+    });
+</script>
+{% endblock %}

@@ -10,6 +10,7 @@ from datetime import datetime, timedelta
 from flask import jsonify
 from sqlalchemy import func
 import json
+from flask_apscheduler import APScheduler
 
 # Load environment variables
 load_dotenv()
@@ -22,6 +23,10 @@ app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'a_default_secret_key')
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 bootstrap = Bootstrap5(app)
+
+scheduler = APScheduler()
+scheduler.init_app(app)
+scheduler.start()
 
 class LLC(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -499,6 +504,47 @@ def calculate_late_fee(due_date, payment_date, rent_amount):
     late_fee = min((days_late - 5) * 5, 50)  # $5 per day, max $50
     return late_fee
 
+
+def generate_invoices_for_all_properties():
+    current_date = datetime.now().date()
+    five_days_from_now = current_date + timedelta(days=5)
+    
+    # Get all properties
+    properties = Property.query.all()
+    
+    for property in properties:
+        for unit in property.units:
+            # Check if an invoice already exists for the next month
+            next_month = current_date.replace(day=1) + timedelta(days=32)
+            next_month = next_month.replace(day=1)
+            
+            existing_invoice = RentPayment.query.filter(
+                RentPayment.unit_id == unit.id,
+                func.extract('year', RentPayment.due_date) == next_month.year,
+                func.extract('month', RentPayment.due_date) == next_month.month
+            ).first()
+            
+            if not existing_invoice:
+                # Calculate the due date for the next month
+                next_due_date = next_month.replace(day=unit.rent_due_date.day)
+                
+                # Only generate the invoice if it's 5 days or less before the due date
+                if next_due_date - timedelta(days=5) <= five_days_from_now:
+                    new_invoice = RentPayment(
+                        unit_id=unit.id,
+                        due_date=next_due_date,
+                        amount=unit.rent_amount,
+                        status='Unpaid'
+                    )
+                    db.session.add(new_invoice)
+    
+    db.session.commit()
+    print(f"Invoices generated on {current_date}")
+
+@scheduler.task('cron', id='generate_invoices', hour=0, minute=0)
+def scheduled_invoice_generation():
+    with app.app_context():
+        generate_invoices_for_all_properties()
 
 if __name__ == '__main__':
     with app.app_context():

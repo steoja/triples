@@ -422,6 +422,9 @@ def unit_rent_payments(unit_id):
         
         rent_payment = RentPayment.query.get(rent_payment_id)
         
+        # Calculate late fee
+        late_fee = calculate_late_fee(rent_payment.due_date, payment_date, rent_payment.amount)
+        
         new_transaction = PaymentTransaction(
             rent_payment_id=rent_payment_id,
             amount=amount,
@@ -430,6 +433,17 @@ def unit_rent_payments(unit_id):
             notes=notes
         )
         db.session.add(new_transaction)
+        
+        # If there's a late fee, add it as a separate transaction
+        if late_fee > 0:
+            late_fee_transaction = PaymentTransaction(
+                rent_payment_id=rent_payment_id,
+                amount=late_fee,
+                payment_date=payment_date,
+                payment_method='Late Fee',
+                notes=f'Late fee for {late_fee} days'
+            )
+            db.session.add(late_fee_transaction)
         
         # Update rent payment status
         if rent_payment.is_fully_paid:
@@ -473,6 +487,17 @@ def generate_rent_payments(property_id):
     db.session.commit()
     flash('Rent payments generated successfully.', 'success')
     return redirect(url_for('property_detail', property_id=property_id))
+
+def calculate_late_fee(due_date, payment_date, rent_amount):
+    if payment_date <= due_date:
+        return 0
+    
+    days_late = (payment_date - due_date).days
+    if days_late <= 5:
+        return 0
+    
+    late_fee = min((days_late - 5) * 5, 50)  # $5 per day, max $50
+    return late_fee
 
 
 if __name__ == '__main__':

@@ -14,6 +14,7 @@
             <th>Amount</th>
             <th>Status</th>
             <th>Total Paid</th>
+            <th>Late Fee</th>
             <th>Balance Due</th>
             <th>Actions</th>
         </tr>
@@ -25,6 +26,8 @@
             <td>${{ payment.amount }}</td>
             <td>{{ payment.status }}</td>
             <td>${{ payment.total_paid }}</td>
+            <td>${{ payment.transactions | selectattr('payment_method', 'equalto', 'Late Fee') | sum(attribute='amount')
+                }}</td>
             <td>${{ payment.balance_due }}</td>
             <td>
                 <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal"

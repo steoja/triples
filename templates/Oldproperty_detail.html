@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+{% block title %}{{ property.name }} Details{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">{{ property.name }}</h1>
+<p>Address: {{ property.address }}</p>
+
+<h2 class="mt-4 mb-3">Units</h2>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Unit Number</th>
+            <th>Renter's Name</th>
+            <th>Phone Number</th>
+            <th>Email</th>
+            <th>Rent Amount</th>
+            <th>Rent Due Date</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for unit in property.units %}
+        <tr>
+            <td>{{ unit.unit_number }}</td>
+            <td>{{ unit.renter_name }}</td>
+            <td>{{ unit.phone_number }}</td>
+            <td>{{ unit.email }}</td>
+            <td>${{ unit.rent_amount }}</td>
+            <td>{{ unit.rent_due_date.strftime('%B %d, %Y') }}</td>
+            <td>
+                <a href="{{ url_for('edit_unit', unit_id=unit.id) }}" class="btn btn-sm btn-primary">Edit</a>
+                <form action="{{ url_for('delete_unit', unit_id=unit.id) }}" method="POST" style="display: inline;">
+                    <button type="submit" class="btn btn-sm btn-danger"
+                        onclick="return confirm('Are you sure you want to delete this unit?');">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<a href="{{ url_for('add_unit', property_id=property.id) }}" class="btn btn-primary mb-4">Add Unit</a>
+
+<h2 class="mt-4 mb-3">Expenses</h2>
+<form method="POST" action="{{ url_for('property_detail', property_id=property.id) }}" class="mb-4">
+    <div class="row g-3 align-items-end">
+        <div class="col-md">
+            <label for="description" class="form-label">Description</label>
+            <input type="text" class="form-control" id="description" name="description" required>
+        </div>
+        <div class="col-md">
+            <label for="amount" class="form-label">Amount</label>
+            <input type="number" step="0.01" class="form-control" id="amount" name="amount" required>
+        </div>
+        <div class="col-md">
+            <label for="date_paid" class="form-label">Date Paid</label>
+            <input type="text" class="form-control" id="date_paid" name="date_paid" required>
+        </div>
+        <div class="col-md">
+            <label for="category" class="form-label">Category</label>
+            <select class="form-select" id="category" name="category" required>
+                <option value="" selected disabled>Choose a category</option>
+                {% for category in categories %}
+                <option value="{{ category }}">{{ category }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md">
+            <label for="payment_method_type" class="form-label">Payment Method</label>
+            <select class="form-select" id="payment_method_type" name="payment_method_type" required>
+                <option value="" selected disabled>Choose a method</option>
+                {% for method in payment_method_types %}
+                <option value="{{ method }}">{{ method }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md" id="credit_card_field" style="display: none;">
+            <label for="credit_card_id" class="form-label">Credit Card</label>
+            <select class="form-select" id="credit_card_id" name="credit_card_id">
+                <option value="" selected disabled>Choose a credit card</option>
+                {% for card in credit_cards %}
+                <option value="{{ card.id }}">{{ card.description }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md" id="check_number_field" style="display: none;">
+            <label for="check_number" class="form-label">Check Number</label>
+            <input type="text" class="form-control" id="check_number" name="check_number">
+        </div>
+        <div class="col-md">
+            <button type="submit" class="btn btn-primary">Add Expense</button>
+        </div>
+    </div>
+</form>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Description</th>
+            <th>Amount</th>
+            <th>Date Paid</th>
+            <th>Category</th>
+            <th>Payment Method</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for expense in property.expenses %}
+        <tr>
+            <td>{{ expense.description }}</td>
+            <td>${{ expense.amount }}</td>
+            <td>{{ expense.date_paid.strftime('%B %d, %Y') }}</td>
+            <td>{{ expense.category }}</td>
+            <td>{{ expense.payment_method.description }}</td>
+            <td>
+                <a href="{{ url_for('expense_detail', expense_id=expense.id) }}" class="btn btn-sm btn-info">View</a>
+                <a href="{{ url_for('edit_expense', expense_id=expense.id) }}" class="btn btn-sm btn-primary">Edit</a>
+                <form action="{{ url_for('delete_expense', expense_id=expense.id) }}" method="POST"
+                    style="display: inline;">
+                    <button type="submit" class="btn btn-sm btn-danger"
+                        onclick="return confirm('Are you sure you want to delete this expense?');">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        flatpickr("#date_paid", {
+            dateFormat: "Y-m-d",
+            altInput: true,
+            altFormat: "F j, Y",
+            allowInput: true
+        });
+
+        const paymentMethodSelect = document.getElementById('payment_method_type');
+        const creditCardField = document.getElementById('credit_card_field');
+        const checkNumberField = document.getElementById('check_number_field');
+        const creditCardSelect = document.getElementById('credit_card_id');
+        const checkNumberInput = document.getElementById('check_number');
+
+        paymentMethodSelect.addEventListener('change', function () {
+            console.log('Payment method changed to:', this.value);  // Debug log
+            if (this.value === 'Credit Card') {
+                creditCardField.style.display = 'block';
+                checkNumberField.style.display = 'none';
+                creditCardSelect.required = true;
+                checkNumberInput.required = false;
+            } else if (this.value === 'Check') {
+                creditCardField.style.display = 'none';
+                checkNumberField.style.display = 'block';
+                creditCardSelect.required = false;
+                checkNumberInput.required = true;
+            } else {
+                creditCardField.style.display = 'none';
+                checkNumberField.style.display = 'none';
+                creditCardSelect.required = false;
+                checkNumberInput.required = false;
+            }
+        });
+    });
+</script>
+
+{% endblock %}

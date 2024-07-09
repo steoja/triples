@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% block title %}Edit Expense{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">Edit Expense</h1>
+<form method="POST">
+    <div class="mb-3">
+        <label for="description" class="form-label">Description</label>
+        <input type="text" class="form-control" id="description" name="description" value="{{ expense.description }}"
+            required>
+    </div>
+    <div class="mb-3">
+        <label for="amount" class="form-label">Amount</label>
+        <input type="number" step="0.01" class="form-control" id="amount" name="amount" value="{{ expense.amount }}"
+            required>
+    </div>
+    <div class="mb-3">
+        <label for="date_paid" class="form-label">Date Paid</label>
+        <input type="text" class="form-control" id="date_paid" name="date_paid"
+            value="{{ expense.date_paid.strftime('%Y-%m-%d') }}" required>
+    </div>
+    <div class="mb-3">
+        <label for="vendor" class="form-label">Vendor</label>
+        <input type="text" class="form-control" id="vendor" name="vendor" value="{{ expense.vendor }}" required
+            autocomplete="off">
+        <div id="vendorSuggestions" class="dropdown-menu"></div>
+    </div>
+    <div class="mb-3">
+        <label for="category" class="form-label">Category</label>
+        <select class="form-select" id="category" name="category" required>
+            {% for category in categories %}
+            <option value="{{ category }}" {% if category==expense.category %}selected{% endif %}>{{ category }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="mb-3">
+        <label for="payment_method_type" class="form-label">Payment Method</label>
+        <select class="form-select" id="payment_method_type" name="payment_method_type" required>
+            {% for method in payment_method_types %}
+            <option value="{{ method }}" {% if method==expense.payment_method_type %}selected{% endif %}>{{ method }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="mb-3" id="credit_card_field" style="display: none;">
+        <label for="credit_card_id" class="form-label">Credit Card</label>
+        <select class="form-select" id="credit_card_id" name="credit_card_id">
+            {% for card in credit_cards %}
+            <option value="{{ card.id }}" {% if card.id==expense.payment_method_id %}selected{% endif %}>{{
+                card.description }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="mb-3" id="check_number_field" style="display: none;">
+        <label for="check_number" class="form-label">Check Number</label>
+        <input type="text" class="form-control" id="check_number" name="check_number"
+            value="{{ expense.check_number }}">
+    </div>
+    <button type="submit" class="btn btn-primary">Update Expense</button>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        flatpickr("#date_paid", {
+            dateFormat: "Y-m-d",
+            altInput: true,
+            altFormat: "F j, Y",
+            allowInput: true
+        });
+
+        const paymentMethodSelect = document.getElementById('payment_method_type');
+        const creditCardField = document.getElementById('credit_card_field');
+        const checkNumberField = document.getElementById('check_number_field');
+
+        function updatePaymentFields() {
+            if (paymentMethodSelect.value === 'Credit Card') {
+                creditCardField.style.display = 'block';
+                checkNumberField.style.display = 'none';
+            } else if (paymentMethodSelect.value === 'Check') {
+                creditCardField.style.display = 'none';
+                checkNumberField.style.display = 'block';
+            } else {
+                creditCardField.style.display = 'none';
+                checkNumberField.style.display = 'none';
+            }
+        }
+
+        paymentMethodSelect.addEventListener('change', updatePaymentFields);
+        updatePaymentFields();  // Call once to set initial state
+
+        // Vendor suggestions
+        const vendorInput = document.getElementById('vendor');
+        const vendorSuggestions = document.getElementById('vendorSuggestions');
+
+        vendorInput.addEventListener('input', function () {
+            const query = this.value.toLowerCase();
+            if (query.length < 2) {
+                vendorSuggestions.innerHTML = '';
+                vendorSuggestions.style.display = 'none';
+                return;
+            }
+
+            fetch(`/vendor-suggestions?query=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(data => {
+                    vendorSuggestions.innerHTML = '';
+                    data.forEach(vendor => {
+                        const item = document.createElement('a');
+                        item.classList.add('dropdown-item');
+                        item.href = '#';
+                        item.textContent = vendor;
+                        item.addEventListener('click', function (e) {
+                            e.preventDefault();
+                            vendorInput.value = this.textContent;
+                            vendorSuggestions.style.display = 'none';
+                        });
+                        vendorSuggestions.appendChild(item);
+                    });
+                    vendorSuggestions.style.display = data.length ? 'block' : 'none';
+                });
+        });
+
+        document.addEventListener('click', function (e) {
+            if (e.target !== vendorInput && e.target !== vendorSuggestions) {
+                vendorSuggestions.style.display = 'none';
+            }
+        });
+    });
+</script>
+{% endblock %}

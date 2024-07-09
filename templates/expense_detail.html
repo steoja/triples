@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Expense Detail{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">Expense Detail</h1>
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title">{{ expense.description }}</h5>
+        <p class="card-text"><strong>Amount:</strong> ${{ expense.amount }}</p>
+        <p class="card-text"><strong>Date Paid:</strong> {{ expense.date_paid.strftime('%B %d, %Y') }}</p>
+        <p class="card-text"><strong>Category:</strong> {{ expense.category }}</p>
+        <p class="card-text"><strong>Payment Method:</strong> {{ expense.payment_method.description }}</p>
+        {% if expense.payment_method.method_type == 'Credit Card' %}
+        <p class="card-text"><strong>Card Type:</strong> {{ expense.payment_method.card_type }}</p>
+        <p class="card-text"><strong>Card Number:</strong> ending in {{ expense.payment_method.card_number }}</p>
+        {% elif expense.payment_method.method_type == 'Check' %}
+        <p class="card-text"><strong>Check Information:</strong> {{ expense.payment_method.description }}</p>
+        {% endif %}
+    </div>
+</div>
+<a href="{{ url_for('property_detail', property_id=expense.property_id) }}" class="btn btn-primary mt-3">Back to
+    Property</a>
+{% endblock %}

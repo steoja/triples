@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Add Unit to {{ property.name }}{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">Add Unit to {{ property.name }}</h1>
+<form method="POST">
+    <div class="mb-3">
+        <label for="unit_number" class="form-label">Unit Number</label>
+        <input type="text" class="form-control" id="unit_number" name="unit_number" required>
+    </div>
+    <div class="mb-3">
+        <label for="renter_name" class="form-label">Renter's Name</label>
+        <input type="text" class="form-control" id="renter_name" name="renter_name" required>
+    </div>
+    <div class="mb-3">
+        <label for="phone_number" class="form-label">Phone Number</label>
+        <input type="tel" class="form-control" id="phone_number" name="phone_number" required>
+    </div>
+    <div class="mb-3">
+        <label for="email" class="form-label">Email</label>
+        <input type="email" class="form-control" id="email" name="email" required>
+    </div>
+    <div class="mb-3">
+        <label for="rent_amount" class="form-label">Rent Amount</label>
+        <input type="number" step="0.01" class="form-control" id="rent_amount" name="rent_amount" required>
+    </div>
+    <div class="mb-3">
+        <label for="rent_due_date" class="form-label">Rent Due Date</label>
+        <input type="text" class="form-control" id="rent_due_date" name="rent_due_date" required>
+    </div>
+    <button type="submit" class="btn btn-primary">Add Unit</button>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        flatpickr("#rent_due_date", {
+            dateFormat: "Y-m-d",
+            altInput: true,
+            altFormat: "F j, Y",
+            allowInput: true
+        });
+    });
+</script>
+{% endblock %}

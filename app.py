@@ -176,6 +176,21 @@ def add_property(llc_id):
 def property_detail(property_id):
     property = Property.query.get_or_404(property_id)
     credit_cards = PaymentMethod.query.filter_by(method_type='Credit Card').all()
+
+    current_year = datetime.now().year
+    total_expenses = db.session.query(func.sum(Expense.amount)).filter(
+        Expense.property_id == property_id,
+        func.extract('year', Expense.date_paid) == current_year
+    ).scalar() or 0
+
+    # Calculate total income (rent paid) for the current year
+    total_income = db.session.query(func.sum(PaymentTransaction.amount)).join(RentPayment).join(Unit).filter(
+        Unit.property_id == property_id,
+        func.extract('year', PaymentTransaction.payment_date) == current_year
+    ).scalar() or 0
+
+    # Calculate net income
+    net_income = total_income - total_expenses
     
     if request.method == 'POST':
         if 'add_payable' in request.form:
@@ -217,7 +232,11 @@ def property_detail(property_id):
                            property=property, 
                            categories=EXPENSE_CATEGORIES, 
                            payment_method_types=PAYMENT_METHOD_TYPES, 
-                           credit_cards=credit_cards,)
+                           credit_cards=credit_cards,
+                           total_expenses=total_expenses,
+                           total_income=total_income,
+                           net_income=net_income,
+                           current_year=current_year)
 
 @app.route('/unit/add/<int:property_id>', methods=['GET', 'POST'])
 def add_unit(property_id):
@@ -545,6 +564,10 @@ def generate_invoices_for_all_properties():
 def scheduled_invoice_generation():
     with app.app_context():
         generate_invoices_for_all_properties()
+
+@app.template_filter()
+def currencyformat(value):
+    return "${:,.2f}".format(value)
 
 if __name__ == '__main__':
     with app.app_context():

@@ -560,7 +560,7 @@ def generate_invoices_for_all_properties():
     db.session.commit()
     print(f"Invoices generated on {current_date}")
 
-@scheduler.task('cron', id='generate_invoices', hour=0, minute=0)
+@scheduler.task('cron', id='generate_invoices', hour=8, minute=52)
 def scheduled_invoice_generation():
     with app.app_context():
         generate_invoices_for_all_properties()
